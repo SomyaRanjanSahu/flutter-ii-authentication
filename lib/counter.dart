@@ -9,8 +9,8 @@ abstract class CounterMethod {
 
   /// you can copy/paste from .dfx/local/canisters/counter/counter.did.js
   static final ServiceClass idl = IDL.Service({
-    CounterMethod.getValue: IDL.Func([], [IDL.Nat], ['query']),
-    CounterMethod.increment: IDL.Func([], [], []),
+    CounterMethod.getValue: IDL.Func([IDL.Text], [IDL.Nat], ['query']),
+    CounterMethod.increment: IDL.Func([IDL.Text], [], []),
   });
 }
 
@@ -26,7 +26,9 @@ class Counter {
   final String canisterId;
   final String url;
 
-  Counter({required this.canisterId, required this.url});
+  final String principalId;
+
+  Counter({required this.canisterId, required this.url, required this.principalId});
 
   // A future method because we need debug mode works for local developement
   Future<void> setAgent(
@@ -50,7 +52,7 @@ class Counter {
 
   Future<void> increment() async {
     try {
-      await actor?.getFunc(CounterMethod.increment)?.call([]);
+      await actor?.getFunc(CounterMethod.increment)?.call([principalId]);
     } catch (e) {
       rethrow;
     }
@@ -58,7 +60,7 @@ class Counter {
 
   Future<int> getValue() async {
     try {
-      var res = await actor?.getFunc(CounterMethod.getValue)!([]);
+      var res = await actor?.getFunc(CounterMethod.getValue)?.call([principalId]);
       if (res != null) {
         return (res as BigInt).toInt();
       }

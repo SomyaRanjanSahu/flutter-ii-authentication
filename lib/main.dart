@@ -1,49 +1,50 @@
+import 'dart:async';
+import 'counterUi.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:uni_links/uni_links.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
-import 'package:go_router/go_router.dart';
-import 'dart:async';
 
 void main() {
   runApp(MyApp());
 }
 
-GoRouter _appRoute = GoRouter(routes: <RouteBase>[
-  GoRoute(
-    path: "/",
-    builder: (BuildContext context, GoRouterState state) {
-      return MyApp();
-    },
-  )
-]);
+final _router = GoRouter(
+  initialLocation: '/',
+  routes: [
+    GoRoute(
+      name: 'home',
+      path: '/',
+      builder: (context, state) => MyHomePage(),
+    ),
+    GoRoute(
+      name: 'counter',
+      path: '/counter',
+      builder: (context, state) {
+        final principalId = state.extra as String? ?? '';
+        return CanisterApp(principalId: principalId);
+      },
+    ),
+  ],
+);
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      // center the title
-
-      home: MyHomePage(title: 'FLUTTER - ICP Authencation'),
+    return MaterialApp.router(
+      routerConfig: _router,
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  final String title;
+  MyHomePage({Key? key}) : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // bool _loading = false;
   String? _error;
   StreamSubscription? _sub;
   String? _principalIdentity;
@@ -96,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> authenticate() async {
     try {
       const url =
-          'https://localhost:4943/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai';
+          'https://a975-171-78-253-193.ngrok-free.app/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai';
       await launch(
         url,
         customTabsOption: CustomTabsOption(
@@ -118,6 +119,25 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  Widget buildMoveButton() {
+    return ElevatedButton(
+      onPressed: () {
+        context.goNamed('counter', extra: _principalIdentity);
+      },
+      child: Text(
+        'Counter Page ➡️',
+        style: TextStyle(fontSize: 18, color: Colors.white),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue,
+        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     var actionButton = _isLoggedIn
@@ -128,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
               style: TextStyle(fontSize: 18, color: Colors.white),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.pink,
               padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -142,7 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
               style: TextStyle(fontSize: 18, color: Colors.white),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.deepPurple,
               padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -151,9 +171,6 @@ class _MyHomePageState extends State<MyHomePage> {
           );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
       body: Padding(
         padding: EdgeInsets.all(20.0),
         child: Center(
@@ -177,6 +194,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 50),
+              if (_isLoggedIn) buildMoveButton(),
+              if (_isLoggedIn) SizedBox(height: 10),
               actionButton,
             ],
           ),
