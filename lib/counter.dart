@@ -3,7 +3,7 @@ import 'package:agent_dart/agent_dart.dart';
 /// motoko/rust function of the Counter canister
 /// see ./dfx/local/counter.did
 abstract class CounterMethod {
-  /// use staic const as method name
+  /// use static const as method name
   static const increment = "increment";
   static const getValue = "getValue";
 
@@ -14,29 +14,29 @@ abstract class CounterMethod {
   });
 }
 
-///
 /// Counter class, with AgentFactory within
 class Counter {
   /// AgentFactory is a factory method that creates Actor automatically.
   /// Save your strength, just use this template
   AgentFactory? _agentFactory;
 
-  /// CanisterCator is the actor that make all the request to Smartcontract.
+  /// CanisterActor is the actor that make all the request to Smart contract.
   CanisterActor? get actor => _agentFactory?.actor;
   final String canisterId;
   final String url;
 
   final String principalId;
 
-  Counter({required this.canisterId, required this.url, required this.principalId});
+  Counter(
+      {required this.canisterId, required this.url, required this.principalId});
 
-  // A future method because we need debug mode works for local developement
+  // A future method because we need debug mode works for local development
   Future<void> setAgent(
       {String? newCanisterId,
-        ServiceClass? newIdl,
-        String? newUrl,
-        Identity? newIdentity,
-        bool? debug}) async {
+      ServiceClass? newIdl,
+      String? newUrl,
+      Identity? newIdentity,
+      bool? debug}) async {
     _agentFactory ??= await AgentFactory.createAgent(
         canisterId: newCanisterId ?? canisterId,
         url: newUrl ?? url,
@@ -60,7 +60,8 @@ class Counter {
 
   Future<int> getValue() async {
     try {
-      var res = await actor?.getFunc(CounterMethod.getValue)?.call([principalId]);
+      var res =
+          await actor?.getFunc(CounterMethod.getValue)?.call([principalId]);
       if (res != null) {
         return (res as BigInt).toInt();
       }

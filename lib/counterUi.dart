@@ -22,6 +22,7 @@ class _CanisterAppState extends State<CanisterApp> {
     super.initState();
   }
 
+  // ---------------- Handling Counter ----------------
   Future<void> initCounter({Identity? identity}) async {
     counter = Counter(
         canisterId: 'bkyz2-fmaaa-aaaaa-qaaaq-cai',
@@ -31,6 +32,7 @@ class _CanisterAppState extends State<CanisterApp> {
     await getValue();
   }
 
+  // ---------------- Getting counter value ----------------
   Future<void> getValue() async {
     var counterValue = await counter?.getValue();
     setState(() {
@@ -39,6 +41,7 @@ class _CanisterAppState extends State<CanisterApp> {
     });
   }
 
+  // ---------------- Incrementing counter ----------------
   Future<void> _incrementCounter() async {
     setState(() {
       _loading = true;
@@ -47,6 +50,7 @@ class _CanisterAppState extends State<CanisterApp> {
     await getValue();
   }
 
+  // ---------------- UI ----------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(

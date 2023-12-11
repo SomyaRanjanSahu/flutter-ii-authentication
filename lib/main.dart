@@ -9,6 +9,7 @@ void main() {
   runApp(MyApp());
 }
 
+// ---------------- Router ----------------
 final _router = GoRouter(
   initialLocation: '/',
   routes: [
@@ -50,10 +51,12 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _principalIdentity;
   bool _isLoggedIn = false;
 
+  // ---------------- Handling Login ----------------
   void handleLogin() async {
     await authenticate();
   }
 
+  // ---------------- Handling Logout ----------------
   void handleLogout() {
     setState(() {
       _isLoggedIn = false;
@@ -73,6 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
+  // ---------------- UniLinks ----------------
   void initUniLinks() {
     _sub = uriLinkStream.listen((Uri? uri) {
       if (uri != null && uri.scheme == 'auth' && uri.host == 'callback') {
@@ -94,10 +98,11 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  // ---------------- Authentication ----------------
   Future<void> authenticate() async {
     try {
       const url =
-          'https://a975-171-78-253-193.ngrok-free.app/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai';
+          'https://localhost:4943/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai';
       await launch(
         url,
         customTabsOption: CustomTabsOption(
@@ -119,6 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  // ---------------- Counter Page Button ----------------
   Widget buildMoveButton() {
     return ElevatedButton(
       onPressed: () {
@@ -138,6 +144,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  // ---------------- UI ----------------
   @override
   Widget build(BuildContext context) {
     var actionButton = _isLoggedIn
