@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   agent_dart
+  flutter_secure_storage_windows
   url_launcher_windows
 )
 

@@ -4,9 +4,9 @@ import "package:go_router/go_router.dart";
 import "package:agent_dart/agent_dart.dart";
 
 class CanisterApp extends StatefulWidget {
-  final String principalId;
-  CanisterApp({Key? key, required this.principalId}) : super(key: key);
-
+  // final DelegationIdentity? identity;
+  // CanisterApp({Key? key, this.identity}) : super(key: key);
+  CanisterApp({Key? key}) : super(key: key);
   @override
   _CanisterAppState createState() => _CanisterAppState();
 }
@@ -23,13 +23,13 @@ class _CanisterAppState extends State<CanisterApp> {
   }
 
   // ---------------- Handling Counter ----------------
-  Future<void> initCounter({Identity? identity}) async {
-    counter = Counter(
+  Future<void> initCounter() async {
+      counter = Counter(
         canisterId: 'bkyz2-fmaaa-aaaaa-qaaaq-cai',
-        url: 'https://6773-171-78-253-193.ngrok-free.app',
-        principalId: widget.principalId,);
-    await counter?.setAgent();
-    await getValue();
+        url: 'https://c7fa-106-213-47-156.ngrok-free.app',
+      );
+      await counter?.setAgent();
+      await getValue();
   }
 
   // ---------------- Getting counter value ----------------

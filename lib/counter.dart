@@ -1,16 +1,15 @@
 import 'package:agent_dart/agent_dart.dart';
 
-/// motoko/rust function of the Counter canister
-/// see ./dfx/local/counter.did
 abstract class CounterMethod {
-  /// use static const as method name
   static const increment = "increment";
   static const getValue = "getValue";
+  static const whoamI = "whoami";
 
   /// you can copy/paste from .dfx/local/canisters/counter/counter.did.js
   static final ServiceClass idl = IDL.Service({
-    CounterMethod.getValue: IDL.Func([IDL.Text], [IDL.Nat], ['query']),
-    CounterMethod.increment: IDL.Func([IDL.Text], [], []),
+    CounterMethod.getValue: IDL.Func([], [IDL.Nat], ['query']),
+    CounterMethod.increment: IDL.Func([], [], []),
+    CounterMethod.whoamI: IDL.Func([], [IDL.Text], []),
   });
 }
 
@@ -25,34 +24,56 @@ class Counter {
   final String canisterId;
   final String url;
 
-  final String principalId;
+  // final DelegationIdentity? identity;
 
   Counter(
-      {required this.canisterId, required this.url, required this.principalId});
-
+      {required this.canisterId, required this.url});
   // A future method because we need debug mode works for local development
   Future<void> setAgent(
       {String? newCanisterId,
       ServiceClass? newIdl,
       String? newUrl,
-      Identity? newIdentity,
+      DelegationIdentity? newIdentity,
       bool? debug}) async {
     _agentFactory ??= await AgentFactory.createAgent(
-        canisterId: newCanisterId ?? canisterId,
-        url: newUrl ?? url,
-        idl: newIdl ?? CounterMethod.idl,
+        canisterId: canisterId,
+        url: url,
+        idl: CounterMethod.idl,
         identity: newIdentity,
         debug: debug ?? true);
   }
+
+  // Future<void> setAgent() async {
+  //   _agentFactory ??= await AgentFactory.createAgent(
+  //       canisterId: canisterId,
+  //       url: url,
+  //       idl: CounterMethod.idl,
+  //       identity: identity,
+  //       debug: true);
+  // }
 
   /// Call canister methods like this signature
   /// ```dart
   ///  CanisterActor.getFunc(String)?.call(List<dynamic>) -> Future<dynamic>
   /// ```
+  ///
+  Future<String> whoamI() async {
+    try {
+      var res = await actor?.getFunc(CounterMethod.whoamI)!([]);
+      print("WhoAmI : $res");
+      if (res != null) {
+        return (res as String);
+      }
+      return res;
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   Future<void> increment() async {
     try {
-      await actor?.getFunc(CounterMethod.increment)?.call([principalId]);
+      await actor?.getFunc(CounterMethod.increment)?.call([]);
+
     } catch (e) {
       rethrow;
     }
@@ -60,8 +81,8 @@ class Counter {
 
   Future<int> getValue() async {
     try {
-      var res =
-          await actor?.getFunc(CounterMethod.getValue)?.call([principalId]);
+      var res = await actor?.getFunc(CounterMethod.getValue)!([]);
+      print(res);
       if (res != null) {
         return (res as BigInt).toInt();
       }

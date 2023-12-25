@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'package:auth_counter/counter.dart';
 import 'counterUi.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uni_links/uni_links.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
+import 'package:agent_dart/agent_dart.dart';
+import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -21,10 +25,7 @@ final _router = GoRouter(
     GoRoute(
       name: 'counter',
       path: '/counter',
-      builder: (context, state) {
-        final principalId = state.extra as String? ?? '';
-        return CanisterApp(principalId: principalId);
-      },
+      builder: (context, state) => CanisterApp(),
     ),
   ],
 );
@@ -50,6 +51,26 @@ class _MyHomePageState extends State<MyHomePage> {
   StreamSubscription? _sub;
   String? _principalIdentity;
   bool _isLoggedIn = false;
+  var publicKeyString;
+  Counter? counter;
+  String _decodedDelegation = '';
+  String _decodedIdentity = '';
+  AgentFactory? _agentFactory;
+  CanisterActor? get actor => newActor;
+  CanisterActor? newActor;
+
+  @override
+  void initState() {
+    super.initState();
+    ed25519();
+    initUniLinks();
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
 
   // ---------------- Handling Login ----------------
   void handleLogin() async {
@@ -64,45 +85,132 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    initUniLinks();
+  // ---------------- Receiving Query Params ----------------
+
+  void printWrapped(String text) {
+    final pattern = new RegExp('.{1,800}'); // 800 is the size of each chunk
+    pattern.allMatches(text).forEach((match) => print(match.group(0)));
   }
 
-  @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
-  }
-
-  // ---------------- UniLinks ----------------
-  void initUniLinks() {
+  Future<void> initUniLinks() async {
     _sub = uriLinkStream.listen((Uri? uri) {
       if (uri != null && uri.scheme == 'auth' && uri.host == 'callback') {
         var queryParams = uri.queryParameters;
-        bool loginStatus = queryParams['status'] == 'true';
 
-        setState(() {
-          _isLoggedIn = loginStatus;
-          if (loginStatus) {
-            _principalIdentity = queryParams['principal'] ?? 'Not available';
-            _error = queryParams['error'] ?? '';
-          } else {
-            _principalIdentity = null;
-          }
-        });
+        String delegationString = queryParams['del'].toString();
+        printWrapped("DelegationString: $delegationString");
+
+
+        _decodedDelegation = Uri.decodeComponent(delegationString);
+        printWrapped("Decoded DelegationString: $_decodedDelegation");
+
+        DelegationChain _delegationChain =
+            DelegationChain.fromJSON(jsonDecode(_decodedDelegation));
+
+        // var appPublicKey = Ed25519PublicKey.fromDer(blobFromHex(publicKeyString));
+        // var appPublicKeyTOstring = bytesToHex(appPublicKey.toDer());
+        // print("appPublicKey: $appPublicKeyTOstring");
+        //
+        // var keyPair = newIdentity!.getKeyPair();
+        // var publicKey = keyPair.publicKey;
+        // var keyPairToJSON = keyPair.secretKey;
+        // print("pub: $publicKey");
+        // print("pri: $keyPairToJSON");
+        //
+        // var newKey = Ed25519KeyIdentity(publicKey, keyPairToJSON);
+
+        DelegationIdentity _delegationIdentity =
+            DelegationIdentity(newIdentity!, _delegationChain);
+
+        // var authClient = AuthClient(
+        //   scheme: 'https',
+        //   authFunction: (AuthPayload payload) async {
+        //     return 'Bearer ${payload.scheme}';
+        //   },
+        //   key: newIdentity,
+        //   identity: ,
+        //   chain: _delegationChain,
+        // );
+        //
+        // print(authClient.getIdentity());
+
+
+        // print("Delegation principal: ${_delegationIdentity.getPrincipal().toString()}");
+        // print("Inner principal: ${_delegationIdentity.getInnerKey().getPrincipal().toString()}");
+        // Principal(_delegationIdentity.getPrincipal().toUint8List()).toString();
+        // print("Inner principal: ${_delegationIdentity.getInnerKey().getPrincipal().toString()}");
+        // print("Inner principal: ${Principal(_delegationIdentity.getPrincipal().toUint8List()).toString()}");
+        // newIdentity.setPrincipal(_principal);
+
+        HttpAgent newAgent = HttpAgent(
+          options: HttpAgentOptions(
+            identity: _delegationIdentity,
+          ),
+          defaultHost: 'localhost',
+          defaultPort: 8000,
+          defaultProtocol: 'http',
+        );
+
+        // Creating Canister Actor -----------------------
+        newActor = CanisterActor(
+            ActorConfig(
+              canisterId: Principal.fromText('bkyz2-fmaaa-aaaaa-qaaaq-cai'),
+              agent: newAgent,
+            ),
+            CounterMethod.idl);
+
+        // counter = Counter(
+        //   canisterId: 'bkyz2-fmaaa-aaaaa-qaaaq-cai',
+        //   url: 'https://bdd4-182-64-30-137.ngrok-free.app/',
+        // );
+        // // counter?.setAgent(newIdentity: _delegationIdentity);
+        // counter?.whoamI();
+
+        var res = newActor?.getFunc(CounterMethod.whoamI)?.call([]);
+        print("WhoAmI : $res");
+
+        // bool loginStatus = true;
+
+        // bool loginStatus = queryParams['status'] == 'true';
+        //
+        // if (loginStatus) {
+        //   processDelegation(queryParams);
+        // }
+
+        //     setState(() {
+        //       _isLoggedIn = loginStatus;
+        //       if (loginStatus) {
+        //         _principalIdentity = queryParams['principal'] ?? 'Not available';
+        //         _error = queryParams['error'] ?? '';
+        //       } else {
+        //         _principalIdentity = null;
+        //       }
+        //     });
+        //   }
+        // }, onError: (err) {
+        //   print('Error processing incoming URI: $err');
       }
-    }, onError: (err) {
-      print('Error processing incoming URI: $err');
     });
+  }
+
+  // ---------------- Generating ED25519 Key ----------------
+  Ed25519KeyIdentity? newIdentity;
+  Future<void> ed25519() async {
+    newIdentity = await Ed25519KeyIdentity.generate(null);
+    Ed25519PublicKey publicKey = newIdentity!.getPublicKey();
+    var publicKeyDer = publicKey.toDer();
+    publicKeyString = bytesToHex(publicKeyDer);
+
+    print("Public Key: $publicKeyString");
   }
 
   // ---------------- Authentication ----------------
   Future<void> authenticate() async {
     try {
-      const url =
-          'https://localhost:4943/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai';
+      // ----- Port : 4943 -----
+      const baseUrl = 'https://7fbd-122-179-100-169.ngrok-free.app/';
+      final url =
+          '$baseUrl?sessionkey=$publicKeyString&canisterId=bd3sg-teaaa-aaaaa-qaaba-cai';
       await launch(
         url,
         customTabsOption: CustomTabsOption(
@@ -124,11 +232,13 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  // ---------------- Counter Page Button ----------------
+  // ---------------- Counter Page Button Action ----------------
   Widget buildMoveButton() {
     return ElevatedButton(
       onPressed: () {
-        context.goNamed('counter', extra: _principalIdentity);
+        // context.goNamed('counter', extra: _delegationIdentity);
+        // whoamiii();
+        // context.goNamed('counter');
       },
       child: Text(
         'Counter Page ➡️',

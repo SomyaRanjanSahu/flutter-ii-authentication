@@ -4,7 +4,9 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   agent_dart
+  flutter_secure_storage_linux
   url_launcher_linux
+  webcrypto
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
