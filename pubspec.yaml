@@ -48,6 +48,7 @@ dependencies:
   asn1lib: ^1.5.0
   crypto: ^3.0.3
   dson: ^2.0.0
+  http: ^1.1.2
 
 dev_dependencies:
   flutter_test:
