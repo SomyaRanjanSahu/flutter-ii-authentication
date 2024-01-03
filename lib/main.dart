@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:agent_dart/agent/agent/http/fetch.dart';
+// import 'package:agent_dart/agent/agent/http/fetch.dart';
 import 'package:auth_counter/counter.dart';
 import 'counterUi.dart';
 import 'package:flutter/material.dart';
@@ -9,13 +9,7 @@ import 'package:uni_links/uni_links.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:agent_dart/agent_dart.dart';
 import 'dart:convert';
-import 'dart:developer';
-import 'package:http/http.dart' as http;
-import 'package:pointycastle/pointycastle.dart' as pointy ;
-import 'dart:math';
-import "package:pointycastle/random/fortuna_random.dart";
-import "package:pointycastle/key_generators/ec_key_generator.dart";
-import "package:pointycastle/ecc/curves/secp256k1.dart";
+import 'package:webcrypto/webcrypto.dart';
 
 void main() {
   runApp(MyApp());
@@ -72,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    ed25519();
+    ecdsaKey();
     initUniLinks();
   }
 
@@ -102,28 +96,28 @@ class _MyHomePageState extends State<MyHomePage> {
     pattern.allMatches(text).forEach((match) => print(match.group(0)));
   }
 
-  Future<Map<String, dynamic>> _newFetch({
-    required String endpoint,
-    String? host,
-    FetchMethod method = FetchMethod.post,
-    Map<String, String>? headers,
-    dynamic body,
-  }) async {
-    // Ensure the host has a fallback value
-    host ??= 'http://localhost:8000/';
-
-    // Build the full endpoint URL
-    String fullEndpoint = '$host$endpoint';
-
-    // Perform the fetch using the defaultFetch function from agent_dart package
-    return await defaultFetch(
-      endpoint: 'api/v2/canister',
-      host: host,
-      method: method,
-      headers: headers,
-      body: body,
-    );
-  }
+  // Future<Map<String, dynamic>> _newFetch({
+  //   required String endpoint,
+  //   String? host,
+  //   FetchMethod method = FetchMethod.post,
+  //   Map<String, String>? headers,
+  //   dynamic body,
+  // }) async {
+  //   // Ensure the host has a fallback value
+  //   host ??= 'http://localhost:8000/';
+  //
+  //   // Build the full endpoint URL
+  //   String fullEndpoint = '$host$endpoint';
+  //
+  //   // Perform the fetch using the defaultFetch function from agent_dart package
+  //   return await defaultFetch(
+  //     endpoint: 'api/v2/canister',
+  //     host: host,
+  //     method: method,
+  //     headers: headers,
+  //     body: body,
+  //   );
+  // }
 
   Future<void> initUniLinks() async {
     _sub = uriLinkStream.listen((Uri? uri) async {
@@ -142,7 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
         // Creating Identity
         DelegationIdentity _delegationIdentity =
-            DelegationIdentity(newIdentity!, _delegationChain);
+            DelegationIdentity(keyPair, _delegationChain);
 
         // inspect(_delegationIdentity);
 
@@ -295,48 +289,32 @@ class _MyHomePageState extends State<MyHomePage> {
   //   }
   // }
 
-  // ---------------- Generating ED25519 Key ----------------
+  var keyPair;
+  Future<void> ecdsaKey() async {
+    keyPair = await EcdsaPrivateKey.generateKey(EllipticCurve.p256);
 
-  // Uint8List _seed() {
-  //   var random = Random.secure();
-  //   var seed = List<int>.generate(32, (_) => random.nextInt(256));
-  //   return Uint8List.fromList(seed);
-  // }
+    EcdsaPrivateKey privateKey = keyPair.privateKey;
+    EcdsaPublicKey publicKey = keyPair.publicKey;
 
-  // pointy.AsymmetricKeyPair<pointy.PublicKey, pointy.PrivateKey> _secp256k1KeyPair() {
-  //   var keyParams = pointy.ECKeyGeneratorParameters(ECCurve_secp256k1());
-  //
-  //   var random = FortunaRandom();
-  //   random.seed(pointy.KeyParameter(_seed()));
-  //
-  //   var generator = ECKeyGenerator();
-  //   generator.init(pointy.ParametersWithRandom(keyParams, random));
-  //
-  //   return generator.generateKeyPair();
-  // }
+    print("Private Key : $privateKey");
+    print("Public Key : $publicKey");
 
-  // Ed25519KeyIdentity? newIdentity;
-  Secp256k1KeyIdentity? newIdentity;
-  Future<void> ed25519() async {
-    // newIdentity = await Ed25519KeyIdentity.generate(null);
-    // Ed25519PublicKey publicKey = newIdentity!.getPublicKey();
-    // var publicKeyDer = publicKey.toDer();
-    // publicKeyString = bytesToHex(publicKeyDer);
-    //
-    // print("Public Key: $publicKeyString");
-    //
-    // var keyPair = _secp256k1KeyPair();
-    // pointy.ECPrivateKey privateKey = keyPair.privateKey as  pointy.ECPrivateKey;
-    // print(privateKey.d);
-    //
-    // pointy.ECPublicKey publicKey = keyPair.publicKey as pointy.ECPublicKey;
-    // print(publicKey.Q);
+    var rawKey = await publicKey.exportRawKey();
+    publicKeyString = bytesToHex(rawKey);
+    print("Public Key : $publicKeyString");
 
-    newIdentity = await Secp256k1KeyIdentity.generate(null);
-    Secp256k1PublicKey _publicKey = newIdentity!.getPublicKey();
-    var publicKeyDer = _publicKey.toDer();
-    publicKeyString = bytesToHex(publicKeyDer);
-    print("Public Key: $publicKeyString");
+    var data = [1, 2, 3];
+    // Sign the hash
+    final signature =
+    await keyPair.privateKey.signBytes([1, 2, 3], Hash.sha256);
+
+    // Verify the signature
+    final isValid =
+    await keyPair.publicKey.verifyBytes(signature, [1, 2, 3], Hash.sha256);
+
+    print('Signature: ${bytesToHex(signature)}');
+    print("Data hex : ${bytesToHex(data)}");
+    print('Is Valid: $isValid');
 
   }
 
@@ -344,7 +322,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> authenticate() async {
     try {
       // ----- Port : 4943 -----
-      const baseUrl = 'https://7b5a-171-76-59-100.ngrok-free.app/';
+      const baseUrl = 'https://4132-182-69-33-135.ngrok-free.app/';
       final url =
           '$baseUrl?sessionkey=$publicKeyString&canisterId=bd3sg-teaaa-aaaaa-qaaba-cai';
       await launch(
