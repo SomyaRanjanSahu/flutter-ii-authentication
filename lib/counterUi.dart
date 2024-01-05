@@ -1,11 +1,8 @@
 import 'counter.dart';
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
-import "package:agent_dart/agent_dart.dart";
 
 class CanisterApp extends StatefulWidget {
-  // final DelegationIdentity? identity;
-  // CanisterApp({Key? key, this.identity}) : super(key: key);
   CanisterApp({Key? key}) : super(key: key);
   @override
   _CanisterAppState createState() => _CanisterAppState();

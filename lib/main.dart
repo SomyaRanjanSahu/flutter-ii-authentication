@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:auth_counter/counter.dart';
 import 'counterUi.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ import 'package:uni_links/uni_links.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:agent_dart/agent_dart.dart';
 import 'dart:convert';
-import 'package:webcrypto/webcrypto.dart';
 
 void main() {
   runApp(MyApp());
@@ -55,8 +53,6 @@ class _MyHomePageState extends State<MyHomePage> {
   var publicKeyString;
   Counter? counter;
   String _decodedDelegation = '';
-  String _decodedIdentity = '';
-  AgentFactory? _agentFactory;
   CanisterActor? get actor => newActor;
   CanisterActor? newActor;
 
@@ -108,40 +104,8 @@ class _MyHomePageState extends State<MyHomePage> {
         DelegationChain _delegationChain =
             DelegationChain.fromJSON(jsonDecode(_decodedDelegation));
 
-        // var appPublicKey = Ed25519PublicKey.fromDer(blobFromHex(publicKeyString));
-        // var appPublicKeyTOstring = bytesToHex(appPublicKey.toDer());
-        // print("appPublicKey: $appPublicKeyTOstring");
-        //
-        // var keyPair = newIdentity!.getKeyPair();
-        // var publicKey = keyPair.publicKey;
-        // var keyPairToJSON = keyPair.secretKey;
-        // print("pub: $publicKey");
-        // print("pri: $keyPairToJSON");
-        //
-        // var newKey = Ed25519KeyIdentity(publicKey, keyPairToJSON);
-
         DelegationIdentity _delegationIdentity =
             DelegationIdentity(newIdentity!, _delegationChain);
-
-        // var authClient = AuthClient(
-        //   scheme: 'https',
-        //   authFunction: (AuthPayload payload) async {
-        //     return 'Bearer ${payload.scheme}';
-        //   },
-        //   key: newIdentity,
-        //   identity: ,
-        //   chain: _delegationChain,
-        // );
-        //
-        // print(authClient.getIdentity());
-
-
-        // print("Delegation principal: ${_delegationIdentity.getPrincipal().toString()}");
-        // print("Inner principal: ${_delegationIdentity.getInnerKey().getPrincipal().toString()}");
-        // Principal(_delegationIdentity.getPrincipal().toUint8List()).toString();
-        // print("Inner principal: ${_delegationIdentity.getInnerKey().getPrincipal().toString()}");
-        // print("Inner principal: ${Principal(_delegationIdentity.getPrincipal().toUint8List()).toString()}");
-        // newIdentity.setPrincipal(_principal);
 
         HttpAgent newAgent = HttpAgent(
           options: HttpAgentOptions(
@@ -155,17 +119,11 @@ class _MyHomePageState extends State<MyHomePage> {
         // Creating Canister Actor -----------------------
         newActor = CanisterActor(
             ActorConfig(
-              canisterId: Principal.fromText('br5f7-7uaaa-aaaaa-qaaca-cai'),
+              canisterId: Principal.fromText('avqkn-guaaa-aaaaa-qaaea-cai'),
               agent: newAgent,
             ),
             CounterMethod.idl);
 
-        // counter = Counter(
-        //   canisterId: 'bkyz2-fmaaa-aaaaa-qaaaq-cai',
-        //   url: 'https://bdd4-182-64-30-137.ngrok-free.app/',
-        // );
-        // // counter?.setAgent(newIdentity: _delegationIdentity);
-        // counter?.whoamI();
 
         var res = await newActor?.getFunc(CounterMethod.whoamI)?.call([]);
         print("WhoAmI : $res");
@@ -213,12 +171,6 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       // ----- Port : 4943 -----
       const baseUrl = 'http://localhost:4943';
-      // const baseUrl = 'http://10.0.2.2:4943';
-      // const baseUrl = 'https://identity.ic0.app';
-      // http://localhost:4943/?sessionkey=302a300506032b657003210066509bdbdeb9cd0a29b804a1fbb0bc4adeb8f1dab4e7e9a65dc6d65df8f09e5b&canisterId=bd3sg-teaaa-aaaaa-qaaba-cai
-      // const baseUrl = 'https://7fbd-122-179-100-169.ngrok-free.app/';
-      http://localhost:4943/?sessionkey=302a300506032b65700321002581d270561038cddad7536b81abe24a874e19478c51a571d19c43b11a3a01c3&canisterId=bkyz2-fmaaa-aaaaa-qaaaq-cai
-      http://localhost:4943/?sessionkey=302a300506032b65700321002581d270561038cddad7536b81abe24a874e19478c51a571d19c43b11a3a01c3&canisterId=ahw5u-keaaa-aaaaa-qaaha-cai
       final url =
           '$baseUrl?sessionkey=$publicKeyString&canisterId=bd3sg-teaaa-aaaaa-qaaba-cai';
       await launch(
