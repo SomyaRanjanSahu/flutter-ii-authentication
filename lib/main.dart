@@ -8,6 +8,7 @@ import 'package:uni_links/uni_links.dart';
 import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:agent_dart/agent_dart.dart';
 import 'dart:convert';
+import 'package:webcrypto/webcrypto.dart';
 
 void main() {
   runApp(MyApp());
@@ -93,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> initUniLinks() async {
-    _sub = uriLinkStream.listen((Uri? uri) {
+    _sub = uriLinkStream.listen((Uri? uri) async {
       if (uri != null && uri.scheme == 'auth' && uri.host == 'callback') {
         var queryParams = uri.queryParameters;
 
@@ -147,14 +148,14 @@ class _MyHomePageState extends State<MyHomePage> {
             identity: _delegationIdentity,
           ),
           defaultHost: 'localhost',
-          defaultPort: 8000,
+          defaultPort: 4943,
           defaultProtocol: 'http',
         );
 
         // Creating Canister Actor -----------------------
         newActor = CanisterActor(
             ActorConfig(
-              canisterId: Principal.fromText('bkyz2-fmaaa-aaaaa-qaaaq-cai'),
+              canisterId: Principal.fromText('br5f7-7uaaa-aaaaa-qaaca-cai'),
               agent: newAgent,
             ),
             CounterMethod.idl);
@@ -166,8 +167,11 @@ class _MyHomePageState extends State<MyHomePage> {
         // // counter?.setAgent(newIdentity: _delegationIdentity);
         // counter?.whoamI();
 
-        var res = newActor?.getFunc(CounterMethod.whoamI)?.call([]);
+        var res = await newActor?.getFunc(CounterMethod.whoamI)?.call([]);
         print("WhoAmI : $res");
+        var res1 = await newActor?.getFunc(CounterMethod.increment)?.call([]);
+        var res2 = await newActor?.getFunc(CounterMethod.getValue)?.call([]);
+        print("getValue : $res2");
 
         // bool loginStatus = true;
 
@@ -208,7 +212,13 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> authenticate() async {
     try {
       // ----- Port : 4943 -----
-      const baseUrl = 'https://7fbd-122-179-100-169.ngrok-free.app/';
+      const baseUrl = 'http://localhost:4943';
+      // const baseUrl = 'http://10.0.2.2:4943';
+      // const baseUrl = 'https://identity.ic0.app';
+      // http://localhost:4943/?sessionkey=302a300506032b657003210066509bdbdeb9cd0a29b804a1fbb0bc4adeb8f1dab4e7e9a65dc6d65df8f09e5b&canisterId=bd3sg-teaaa-aaaaa-qaaba-cai
+      // const baseUrl = 'https://7fbd-122-179-100-169.ngrok-free.app/';
+      http://localhost:4943/?sessionkey=302a300506032b65700321002581d270561038cddad7536b81abe24a874e19478c51a571d19c43b11a3a01c3&canisterId=bkyz2-fmaaa-aaaaa-qaaaq-cai
+      http://localhost:4943/?sessionkey=302a300506032b65700321002581d270561038cddad7536b81abe24a874e19478c51a571d19c43b11a3a01c3&canisterId=ahw5u-keaaa-aaaaa-qaaha-cai
       final url =
           '$baseUrl?sessionkey=$publicKeyString&canisterId=bd3sg-teaaa-aaaaa-qaaba-cai';
       await launch(

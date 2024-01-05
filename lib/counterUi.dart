@@ -25,7 +25,7 @@ class _CanisterAppState extends State<CanisterApp> {
   // ---------------- Handling Counter ----------------
   Future<void> initCounter() async {
       counter = Counter(
-        canisterId: 'bkyz2-fmaaa-aaaaa-qaaaq-cai',
+        canisterId: 'br5f7-7uaaa-aaaaa-qaaca-cai',
         url: 'https://c7fa-106-213-47-156.ngrok-free.app',
       );
       await counter?.setAgent();
